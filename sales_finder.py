@@ -19,11 +19,21 @@ class GameSalesFinder:
         self.rawg_base_url = 'https://api.rawg.io/api'
         self.stores = self._fetch_stores()
 
-    def fetch_sale_games(self, length = None):
+    def fetch_sale_games(self, length = None, filter: list = list()):
+
+        filter_str = str()
+        if filter:
+            for value in filter:
+                filter_str += value + ','
+            filter_str = filter_str.strip(',')
+
         params = {
             'onSale': 'true',
-            'pageSize': length if length != None else '60'
+            'pageSize': (length if length != None else '60'),
         }
+
+        if filter_str:
+            params['storeID'] = filter_str
 
         response = requests.get(self.cheapshark_base_url + '/deals', params=params)
         if response.status_code != 200:
@@ -35,10 +45,12 @@ class GameSalesFinder:
             deal = {
                 'title': game['title'],
                 'store_id': game['storeID'],
-                'savings': game['savings'],
+                'savings': str(int(float(game['savings']))) + '%',
                 'store_link': 'https://www.cheapshark.com/redirect?dealID=' + game['dealID'],
+                'store_name': self.store_id_to_name(game['storeID']),
                 'game_cover': game_details['background_image'],
                 'description': game_details['description_raw'],
+                'metacritic_rating': game_details['metacritic'],
             }
             
             deals.append(deal)
@@ -48,15 +60,17 @@ class GameSalesFinder:
     def get_stores(self):
         return self.stores
 
-    def get_store_name(self, id):
+    def store_id_to_name(self, id) -> str:
         for store in self.stores:
             if store['storeID'] == id:
                 return store['storeName']
+        return str()
     
     def _fetch_stores(self):
         params = {
             'key': self.rawg_api_key,
         }
+        
         response = requests.get(self.cheapshark_base_url + '/stores', params=params)
         if response.status_code != 200:
             raise Exception('Could not fetch stores')
