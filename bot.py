@@ -49,44 +49,35 @@ class SettingsView(discord.ui.View):
         if select.values:
             filter_stores.extend(select.values)
 
-        for select_option  in self._select_options1:
-            select_option.default = False
-
-        search_idx = 0
-        for select_option in self._select_options1:
-
-            if search_idx == len(select.values):
-                break
-
-            for value in select.values[search_idx:]:
-                if value == select_option.value:
-                    select_option.default = True
-                    search_idx += 1
-                    break
-
+        self._filter_update_defaults(select.values, self._select_options1)
         await interaction.response.defer()
 
     @discord.ui.select(placeholder='Filter options 2', max_values=len(_select_options2), options=_select_options2)
     async def filter_select2(self, interaction: discord.Interaction, select: discord.ui.Select):
         if select.values:
             filter_stores.extend(select.values)
+            
+        self._filter_update_defaults(select.values, self._select_options2)
+        await interaction.response.defer()
 
-        for select_option  in self._select_options1:
+    def _filter_update_defaults(self, selected_values, select_options):
+
+        selected_values = sorted(selected_values)
+
+        for select_option in select_options:
             select_option.default = False
 
         search_idx = 0
-        for select_option in self._select_options1:
+        for select_option in select_options:
 
-            if search_idx == len(select.values):
+            if search_idx == len(selected_values):
                 break
 
-            for value in select.values[search_idx:]:
+            for value in selected_values[search_idx:]:
                 if value == select_option.value:
                     select_option.default = True
                     search_idx += 1
                     break
-
-        await interaction.response.defer()
 
 
 @bot.event
