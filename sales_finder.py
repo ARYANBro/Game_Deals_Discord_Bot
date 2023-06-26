@@ -19,7 +19,7 @@ class GameSalesFinder:
         self.rawg_base_url = 'https://api.rawg.io/api'
         self.stores = self._fetch_stores()
 
-    def fetch_sale_games(self, length = None, filter: list = list()):
+    def fetch_sale_games(self, length = None, filter: list = list(), only_aaa=False, sale_only = False, sort_by = 'Deal Rating'):
 
         filter_str = str()
         if filter:
@@ -28,8 +28,10 @@ class GameSalesFinder:
             filter_str = filter_str.strip(',')
 
         params = {
-            'onSale': 'true',
+            'onSale': str(int(sale_only)),
             'pageSize': (length if length != None else '60'),
+            'AAA': str(int(only_aaa)),
+            'sortBy': sort_by,
         }
 
         if filter_str:

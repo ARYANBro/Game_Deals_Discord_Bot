@@ -1,5 +1,6 @@
 import sales_finder
 import game_view
+from settings_view import SettingsView
 from embed import create_embed
 
 import discord
@@ -16,89 +17,32 @@ intents.typing = False
 intents.message_content = True
 intents.presences = False
 
-bot = commands.Bot(command_prefix='+', intents=intents)
-filter_stores = []
+class GameSalesBot(commands.Bot):
+    def __init__(self, command_prefix, intents):
+        super().__init__(command_prefix, intents=intents)
 
-class SettingsView(discord.ui.View):
-    _select_options1 = []
-    _select_options2 = []
-    
+    async def on_ready(self):
+        print('Bot is ready!')
+        await self.change_presence(activity=discord.Game(name='+sales'))
 
-    for i, store in enumerate(sales_finder.game_sales.get_stores()):
-        if i == 25:
-            break
-        _select_options1.append(
-            discord.SelectOption(
-                label=store['storeName'],
-                value=store['storeID'],
-                emoji='🛒',
-            )
-        )
-        
-    for store in sales_finder.game_sales.get_stores()[25:]:
-        _select_options2.append(
-            discord.SelectOption(
-                label=store['storeName'],
-                value=store['storeID'],
-                emoji='🛒',
-            )
-        )
+    async def setup_hook(self):
+        self.add_view(SettingsView())
+        await super().setup_hook()
 
-    @discord.ui.select(placeholder='Filter options 1', min_values=1, max_values=len(_select_options1), options=_select_options1)
-    async def filter_select(self, interaction: discord.Interaction, select: discord.ui.Select):
-        if select.values:
-            filter_stores.extend(select.values)
-
-        self._filter_update_defaults(select.values, self._select_options1)
-        await interaction.response.defer()
-
-    @discord.ui.select(placeholder='Filter options 2', max_values=len(_select_options2), options=_select_options2)
-    async def filter_select2(self, interaction: discord.Interaction, select: discord.ui.Select):
-        if select.values:
-            filter_stores.extend(select.values)
-            
-        self._filter_update_defaults(select.values, self._select_options2)
-        await interaction.response.defer()
-
-    def _filter_update_defaults(self, selected_values, select_options):
-
-        selected_values = sorted(selected_values)
-
-        for select_option in select_options:
-            select_option.default = False
-
-        search_idx = 0
-        for select_option in select_options:
-
-            if search_idx == len(selected_values):
-                break
-
-            for value in selected_values[search_idx:]:
-                if value == select_option.value:
-                    select_option.default = True
-                    search_idx += 1
-                    break
-
-
-@bot.event
-async def on_ready():
-    print('Bot is ready!')
+bot = GameSalesBot(command_prefix='+', intents=intents)
 
 @bot.command()
 async def settings(ctx: commands.Context):
     await ctx.send('Settings', view=SettingsView())
 
 @bot.command()
-async def embed(ctx: commands.Context, num_games = None):
+async def sales(ctx: commands.Context, num_games = None):
     async with ctx.typing():
-        sale_list = sales_finder.game_sales.fetch_sale_games(num_games, filter_stores)
+        sale_list = sales_finder.game_sales.fetch_sale_games(num_games, SettingsView.filtered_stores, SettingsView.only_aaa, SettingsView.on_sale, SettingsView.sort_by)
 
-        game = sale_list[0]
-        stores = sales_finder.game_sales.get_stores()
-
-        initial_embed = create_embed(game, stores)
-
-    await ctx.send(embed=initial_embed, view=game_view.GameListView(sale_list, initial_embed))
+    view = game_view.GameListView(sale_list)
+    bot.add_view(view)
+    await ctx.send(embed=create_embed(sale_list[0]), view=view)
 
 if __name__ == '__main__':
     bot.run(token=str(os.getenv('BOT_TOKEN')))
