@@ -23,8 +23,6 @@ def create_embed(game_info):
     game_embed.set_footer(text="CheapShark for sales, RAWG for images and game info")
     game_embed.set_author(name=game_info['store_name'])
     game_embed.set_image(url=game_info['game_cover'])
-    store_logo_url = 'https://www.cheapshark.com' + game_sales.get_stores()[int(game_info['store_id']) - 1]['images']['logo']
-    game_embed.set_thumbnail(url=store_logo_url)
     game_embed.add_field(name='`💰 Savings`', value=game_info['savings'], inline=True)
     game_embed.add_field(name='`🥇 Metacritic Rating`', value=game_info['metacritic_rating'], inline=True)
     return game_embed

@@ -34,6 +34,7 @@ class GameListView(discord.ui.View):
             self.curr_index = len(self.list_items) - 1
         await self._update(interaction)
 
+
     @discord.ui.button(disabled=True, style=discord.ButtonStyle.gray, custom_id='glv_b_disabled_button')
     async def disabled_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.defer()
