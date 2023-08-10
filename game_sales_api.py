@@ -39,13 +39,15 @@ class GameSalesAPI(metaclass=ABCMeta):
 
     @staticmethod
     @abstractmethod
-    def fetch_game_sales(limit=None, stores=None, sort_by=None) -> list[SaleDetails]:
+    def fetch_game_sales(limit:int=10, stores:list[Store]=[], sort_by=None, **kwargs) -> list[SaleDetails]:
         """Fetches game sales"""
 
     @staticmethod
     @abstractmethod
     def fetch_game_stores() -> list[Store]:
-        """Fetches game stores"""
+        """Fetches game stores.
+        Raises :class:`HTTPError`, if one occurred.
+        """
 
     @staticmethod
     @abstractmethod

@@ -4,15 +4,15 @@ from enum import Enum
 
 
 class CheapShark_SortOptions(Enum):
-    DEAL_RATING = 'Deal Rating',
-    METACRITIC = 'Metacritic',
-    REVIEWS = 'Reviews',
-    RELEASE = 'Release',
+    DEAL_RATING = 'Deal Rating'
+    METACRITIC = 'Metacritic'
+    REVIEWS = 'Reviews'
+    RELEASE = 'Release'
     RECENT = 'Recent'
-    PRICE = 'Price',
-    TITLE = 'Title',
-    SAVINGS = 'Savings',
-    STORE = 'Store',
+    PRICE = 'Price'
+    TITLE = 'Title'
+    SAVINGS = 'Savings'
+    STORE = 'Store'
 
 
 class CheapSharkAPI(GameSalesAPI):
@@ -21,15 +21,18 @@ class CheapSharkAPI(GameSalesAPI):
     _base_url = "https://www.cheapshark.com/api/1.0/"
 
     @staticmethod
-    def fetch_game_sales(limit=1, stores=None, sort_by = CheapShark_SortOptions.DEAL_RATING, **kwargs) -> list[SaleDetails]:
+    def fetch_game_sales(limit, stores:list[Store]=[], sort_by = CheapShark_SortOptions.DEAL_RATING, **kwargs) -> list[SaleDetails]:
         params = {
             'pageSize': str(limit),
-            'sortBy': sort_by.value[0],
-            'onSale': '1'
+            'sortBy': str(sort_by),
         }
 
-        if stores is not None:
-            params['storeID'] = str(stores)
+        if stores:
+            store_str = str()
+            for store in stores:
+                store_str += str(store.id) + ','
+            store_str = store_str.rstrip(',')
+            params['storeID'] = store_str
 
         if len(kwargs) > 0:
             for key, value in kwargs.items():
@@ -77,7 +80,6 @@ class CheapSharkAPI(GameSalesAPI):
             'Steamworks': 'steamworks',
             'Only AAA' : 'AAA',
         }
-
     
     @staticmethod
     def _get_store_name(store_id: int) -> str:

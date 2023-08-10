@@ -13,6 +13,8 @@ import re
 import os
 from api_locator import APILocator
 from game_sales_api import GameSalesAPI
+from discord import SelectOption
+from game_sales_api import Store
 
 class GameSalesFinder:
     def __init__(self, rawg_api_key):
@@ -20,37 +22,41 @@ class GameSalesFinder:
         self.cheapshark_base_url = 'https://www.cheapshark.com/api/1.0'
         self.rawg_base_url = 'https://api.rawg.io/api'
 
-    def fetch_sale_games(self, length: int = 0, filter: list = list()):
+    def fetch_sale_games(self, limit, stores, sort_options, **kwargs):
+        lst = []
+        for store in stores:
+            lst.append(Store(
+                name=store.label,
+                id=store.value,
+            ))
 
-        filter_str = str()
-        if filter:
-            for value in filter:
-                filter_str += value + ','
-            filter_str = filter_str.strip(',')
+        games = APILocator.get_api().fetch_game_sales(limit=limit, stores=lst, sort_by=(sort_options[0] if sort_options else None), **kwargs)
 
-        games = APILocator.get_api().fetch_game_sales(limit=length)
-                
         deals = []
         for game in games:
-            game_details = self._fetch_game_details(game.game_title)
-            deal = {
-                'title': game.game_title,
-                'savings': str(int(float(game.percentage_off))) + '%',
-                'store_link': game.store_link,
-                'store_name': game.store_name,
-                'game_cover': game_details['background_image'],
-                'description': GameSalesFinder._remove_special_characters(game_details['description_raw']),
-                'metacritic_rating': game_details['metacritic'],
-            }
-            
-            deals.append(deal)
+            try:
+                game_details = self._fetch_game_details(game.game_title)
+                deal = {
+                    'title': game.game_title,
+                    'savings': str(int(float(game.percentage_off))) + '%',
+                    'store_link': game.store_link,
+                    'store_name': game.store_name,
+                    'game_cover': game_details['background_image'],
+                    'description': GameSalesFinder._remove_special_characters(game_details['description_raw']),
+                    'metacritic_rating': game_details['metacritic'],
+                    'rating': game_details['ratings'][0]['title'] if game_details['ratings'] else None,
+                }
+                deals.append(deal)
+            except:
+                print('Error fetching game details for ' + game.game_title)
+                continue
 
         return deals
     
     def get_stores(self):
         return APILocator.get_api().fetch_game_stores()
 
-    def _fetch_game_details(self, title: str):
+    def  _fetch_game_details(self, title: str):
         new_title = GameSalesFinder._remove_non_alphanumeric(title)
         params = {
             'key': self.rawg_api_key,
@@ -63,7 +69,7 @@ class GameSalesFinder:
         response.raise_for_status()
         
         game_details = dict(response.json())
-        if len(game_details) < 0:
+        if len(game_details['results']) <= 0:
             raise Exception('No game found of title ' + title)
         
         response = requests.get(self.rawg_base_url + '/games/' + game_details['results'][0]['slug'], params={ 'key': self.rawg_api_key })

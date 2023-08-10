@@ -11,6 +11,10 @@ def quote(string: str) -> str:
     new_str = '>>> ' + string
     return new_str
 
+def code(string: str) -> str:
+    new_str = '```' + string + '```'
+    return new_str
+
 def create_embed(game_info):
     game_embed = discord.Embed(
         title=game_info['title'],
@@ -20,9 +24,25 @@ def create_embed(game_info):
         timestamp=datetime.now()
     )
 
+    ratings_emoji = {
+        'exceptional': '🎯',
+        'recommended': '👍',
+        'meh': '😑',
+        'skip': '⛔'
+    }
+
     game_embed.set_footer(text="CheapShark for sales, RAWG for images and game info")
     game_embed.set_author(name=game_info['store_name'])
     game_embed.set_image(url=game_info['game_cover'])
     game_embed.add_field(name='`💰 Savings`', value=game_info['savings'], inline=True)
     game_embed.add_field(name='`🥇 Metacritic Rating`', value=game_info['metacritic_rating'], inline=True)
+
+    try: 
+        emoji = ratings_emoji[game_info['rating']]
+    except:
+        emoji = '❌'
+
+    game_embed.add_field(name= code('Rating' +  emoji), value=str(game_info['rating']).title(), inline=True)
+
+
     return game_embed

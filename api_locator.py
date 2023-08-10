@@ -4,7 +4,7 @@ from cheapsharkapi import CheapSharkAPI
 
 class APILocator:
 
-    sales_api = None
+    sales_api = CheapSharkAPI
 
     @classmethod
     def provide_api(cls, api):
@@ -12,4 +12,4 @@ class APILocator:
 
     @classmethod
     def get_api(cls) -> type[GameSalesAPI]:
-        return CheapSharkAPI
+        return APILocator.sales_api
